@@ -19,6 +19,9 @@ export default function App() {
 
   return (
     <MotionConfig transition={transition}>
+      <div style={{ color: "red" }}>
+        Hello World
+      </div>
       <motion.button
         ref={ref}
         initial={false}
