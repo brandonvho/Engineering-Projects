@@ -1,11 +1,12 @@
-# Shoe Rack 
+# Shoe Rack Connector
  
 ## Overview 
-Brief description of the project and the problem it addresses. 
+Current shoe rack is full. Creating a modular shoe rack to adjust compartment spacing and overall size.
  
 ## Objectives 
-- What skills you aimed to develop 
-- What the project was intended to accomplish 
+- Improve Autodesk Fusion Skills
+- Testing tolerances of 3D model to real life objects
+- Improve project documentation and github
  
 ## Requirements & Constraints 
 - Functional requirements the design must meet 
@@ -13,21 +14,19 @@ Brief description of the project and the problem it addresses.
 - Safety, size, or performance limitations 
  
 ## Design Summary 
-High-level explanation of how the system works. 
-Mention key components and design approach. 
+Designing and 3D printing connectors allowing to connect 1x6inch wood together creating variable compartments for height, width, and depth. Connecters can hold any length 1x6 wood and attach to each other to add depth to the compartment.
  
 ## Tools & Technologies 
-- CAD: 
-- Electronics (if any): 
-- Manufacturing: 
-- Software: 
+- CAD: Autodesk Fusion 
+- Manufacturing: Bambu Lab P1S
+- Material: Sunlu PLA 
+- Software: Bambu Lab Studio
  
 ## Testing & Results 
-How the design was tested and the outcome. 
-Mention key observations or performance. 
+
  
 ## Challenges & Lessons Learned 
-Main issues encountered and what you learned from solving them. 
+
  
 ## Future Improvements 
-Ideas for improvements or next iterations. 
+

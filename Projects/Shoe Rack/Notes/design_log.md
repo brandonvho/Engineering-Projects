@@ -1,7 +1,6 @@
 # Design Log – Shoe Rack
 
-## Date: YYYY-MM-DD
-- **Work:** What you did
-- **Issues:** What didn't work or needs improvement
-- **Notes:** Engineering observations
-- **Next:** Next steps
+## Date: 1/19/2026
+- **Work:** Creating prototype design and assembly for shoerack
+- **Notes:** Learning Autodesk Fusion controls to make objects and assemble them together
+- **Next:** 3D print connectors
