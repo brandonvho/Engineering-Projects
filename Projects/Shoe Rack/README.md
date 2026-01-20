@@ -26,7 +26,7 @@ Designing and 3D printing connectors allowing to connect 1x6inch wood together c
 
  
 ## Challenges & Lessons Learned 
-
+- The more complex the design, the more testing and precise measurements must be done.
  
 ## Future Improvements 
 
