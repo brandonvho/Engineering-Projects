@@ -1,4 +1,4 @@
-# Shoe Rack  
+# Shoe Rack Corner Bracket 
  
 ## Overview 
 Brief description of the project and the problem it addresses. 

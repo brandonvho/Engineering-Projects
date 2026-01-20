@@ -1,4 +1,4 @@
-# Design Log – Shoe Rack 
+# Design Log – Shoe Rack Corner Bracket
 
 ## Date: YYYY-MM-DD
 - **Work:** What you did
