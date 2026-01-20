@@ -23,7 +23,9 @@ Designing and 3D printing connectors allowing to connect 1x6inch wood together c
 - Software: Bambu Lab Studio
  
 ## Testing & Results 
-
+- Designed shoe rack braket with out peg and peg hole. Designed, printed, and tested fitment of v1 peg and peg hole prototype.
+- Prototype peg and peg hole v1 did not fit and was designed for rotational movement not sturdy structural connection.
+- Prototype peg and peg hole v2 fit well and snug and over time the pieces can easily be attached and removed, but I am aiming for a more permanent structure.
  
 ## Challenges & Lessons Learned 
 - The more complex the design, the more testing and precise measurements must be done.
