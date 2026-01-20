@@ -20,3 +20,4 @@ The peg will only experience tension and compression, not shear forces, and the 
 25g of filament used to print test v2 pieces.
 - **Work:** Changed the peg design to not have a lip but a cylinder inserted into a hole. The peg and peg hole are the same diameter. Chamfered the peg and hole so inserting the peg will be easier. Printing using Sunlu PLA and default Bambu Lab P1S print settings except wall loops changed from 2->4 to make the outer boundary solid and strong and changed sparse infill pattern to grid->gyroid for equal strength in all directions.
 - **Next:** Test the if the peg and hole can fit and add design to the shoe rack connector.
+
