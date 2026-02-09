@@ -24,3 +24,7 @@ The peg will only experience tension and compression, not shear forces, and the 
 ## Date: 1/19/2026
 - **Note:** Prototype v2 of peg connection and peg hole fit snuggly. Easily connectable and harder to take apart but not impossible. Printed with default strength setting to use 300g PLA filament including supports and print time 9hrs.
 - **Work:** Add v2 peg and peg hole to shoe rack bracket. Changed chamfer from 0.1"->0.05".
+
+## Date: 1/20/2026
+- **Note:** Printed v1 of the Shoe rack bracket and realized the print time (9hrs) and filament cost (300g) was not cost effective. Building a multi-tiered shelf would require four brackets each tier and the 3D printer is limited to printing one bracket at a time.
+- **Next:** Redesign the shoe rack bracket to be smallar to use less material and decrease print time significantly by being able to print multiple in one print session.
