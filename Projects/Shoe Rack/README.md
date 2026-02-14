@@ -1,6 +1,6 @@
 
 ## Overview 
-Current shoe rack is full. Creating a modular shoe rack to adjust compartment spacing and overall size.
+Design a 3D printable bracket to build a multi-tier shoe rack.
 
 ## Objectives 
 - Improve Autodesk Fusion Skills
@@ -29,5 +29,6 @@ Designing and 3D printing connectors allowing to connect 1x6inch wood together c
 
 ## Challenges & Lessons Learned 
 - The more complex the design, the more testing and precise measurements must be done.
+- I did not take into account how large my bracket was. The print time and material cost was too much, so I had to redesign and decided not to make it modular.
 
 ## Future Improvements 

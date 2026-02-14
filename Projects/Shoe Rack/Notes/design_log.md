@@ -1,30 +1,128 @@
-# Design Log – Shoe Rack
+# Design Log – Shoe Rack Project  
 
-## Date: 1/19/2026
-- **Work:** Creating prototype design and assembly for shoerack
-- **Notes:** Learning Autodesk Fusion controls to make objects and assemble them together
-- **Next:** 3D print connectors
+---
 
-## Date: 1/19/2026
-- **Work:** Designed and Printed peg and hole connection separate before adding to final connector piece
-- **Notes:** 27g of filament used to print test pieces
-- **Next:** Test fit the parts, add to final connector piece, print and test fit wood
+## Date: January 19, 2026  
 
-## Date: 1/19/2026
-- **Note:** I overestimated how flexible the design would be. The top of the peg is too thick, so it does not flex enough to fit into the hole. I tested this with a caliper by squeezing the top of the peg, and the diameter only changed by 0.01 inch. The peg hole is also too large, so when the peg is inserted, the shaft has free play.
+### Work Completed  
+- Developed initial prototype design and assembly model for the shoe rack.  
+- Practiced part modeling and assembly workflows in Autodesk Fusion.  
 
-The Version 1 peg and hole design is overly complex and is mainly intended for parts that need to connect and rotate. Because of this, I am switching to a simpler design similar to LEGO bricks.
+### Notes  
+- Focused on improving proficiency with parametric modeling, constraints, and component assembly.  
 
-The peg will only experience tension and compression, not shear forces, and the infill structure will support these loads. Print orientation is not a concern. If the hole were printed on the YZ plane, a circular hole would sag, so using a square peg avoids this issue.
+### Next Steps  
+- 3D print connector prototypes.  
 
-25g of filament used to print test v2 pieces.
-- **Work:** Changed the peg design to not have a lip but a cylinder inserted into a hole. The peg and peg hole are the same diameter. Chamfered the peg and hole so inserting the peg will be easier. Printing using Sunlu PLA and default Bambu Lab P1S print settings except wall loops changed from 2->4 to make the outer boundary solid and strong and changed sparse infill pattern to grid->gyroid for equal strength in all directions.
-- **Next:** Test the if the peg and hole can fit and add design to the shoe rack connector.
+---
 
-## Date: 1/19/2026
-- **Note:** Prototype v2 of peg connection and peg hole fit snuggly. Easily connectable and harder to take apart but not impossible. Printed with default strength setting to use 300g PLA filament including supports and print time 9hrs.
-- **Work:** Add v2 peg and peg hole to shoe rack bracket. Changed chamfer from 0.1"->0.05".
+## Date: January 19, 2026  
 
-## Date: 1/20/2026
-- **Note:** Printed v1 of the Shoe rack bracket and realized the print time (9hrs) and filament cost (300g) was not cost effective. Building a multi-tiered shelf would require four brackets each tier and the 3D printer is limited to printing one bracket at a time.
-- **Next:** Redesign the shoe rack bracket to be smallar to use less material and decrease print time significantly by being able to print multiple in one print session.
+### Work Completed  
+- Designed and printed a separate peg-and-hole connection prototype prior to integrating it into the final connector component.  
+
+### Notes  
+- 27 g of PLA filament used for test prints.  
+
+### Next Steps  
+- Test fit printed components.  
+- Integrate connection system into final connector piece.  
+- Print and test fit with wood components.  
+
+---
+
+## Date: January 19, 2026  
+
+### Evaluation of Version 1 Connection  
+
+Testing revealed that the initial peg-and-hole design did not perform as intended.  
+
+- The peg head was overly thick, limiting elastic deformation.  
+- Measurement with calipers showed only a 0.01 in diameter reduction when compressed.  
+- The mating hole was oversized, resulting in noticeable shaft free play after insertion.  
+
+The Version 1 design was unnecessarily complex and better suited for rotational joints rather than fixed structural connections. Based on this evaluation, I transitioned to a simplified cylindrical interference-fit design inspired by interlocking brick systems.  
+
+### Design Considerations  
+- The peg will primarily experience tension and compression forces rather than shear.  
+- Internal infill structure will support applied loads.  
+- Print orientation is not critical for structural integrity in this application.  
+- Circular holes printed on the YZ plane may exhibit sagging; simplified cylindrical geometry mitigates dimensional distortion risks.  
+
+25 g of PLA filament was used to print Version 2 test components.  
+
+### Design Changes (Version 2)  
+- Removed retaining lip; replaced with a straight cylindrical peg.  
+- Peg and hole designed to equal nominal diameters.  
+- Added chamfers to both peg and hole to improve assembly alignment and insertion.  
+- Material: Sunlu PLA.  
+- Printer: Bambu Lab P1S.  
+- Modified print settings:  
+  - Wall loops increased from 2 → 4 to improve outer wall strength.  
+  - Sparse infill pattern changed from Grid → Gyroid for more uniform multidirectional strength.  
+
+### Next Steps  
+- Evaluate fit and retention strength of Version 2 connection.  
+- Integrate updated connection geometry into shoe rack bracket.  
+
+---
+
+## Date: January 19, 2026  
+
+### Evaluation of Version 2 Prototype  
+
+- Peg-and-hole connection achieved a snug fit.  
+- Components were easy to assemble and required moderate force to disassemble, which is acceptable for the intended application.  
+- Printed using default strength settings.  
+- Total material usage: approximately 300 g PLA (including supports).  
+- Total print time: 9 hours.  
+
+### Work Completed  
+- Integrated Version 2 peg-and-hole geometry into shoe rack bracket.  
+- Reduced chamfer size from 0.10 in → 0.05 in for improved fit tolerance.  
+
+---
+
+## Date: January 20, 2026  
+
+### Evaluation  
+
+- Printed Version 1 of the shoe rack bracket.  
+- Print time (9 hours) and filament usage (300 g) were determined to be inefficient for large-scale production.  
+- A multi-tier shelf would require four brackets per tier.  
+- Printer limitations allow only one bracket per print cycle, making production time excessive.  
+
+### Next Steps  
+- Redesign bracket to reduce material usage and print time.  
+- Optimize geometry to allow multiple brackets per single print session.  
+
+---
+
+## Date: February 13, 2026  
+
+### Measurements and Calibration  
+
+- Purchased 1 in × 10 in × 10 ft common board.  
+- Measured actual thickness: 0.76 in – 0.78 in (nominal lumber dimension deviation noted).  
+
+- Printed 20 mm × 20 mm × 20 mm calibration cube.  
+- Measured dimensional variance:  
+  - X and Y axes print approximately 0.2 mm undersized (~0.0079 in).  
+- Determined deviation to be negligible for current project tolerances.  
+
+### Next Steps  
+- Cut common board into 5 in segments.  
+- Design and print Shoe Rack Bracket Version 2 with dimensional adjustments as needed.  
+
+---
+
+## Date: February 13, 2026
+
+### Work Completed
+- Designed and test printed Shoe Rack Bracket V2.  
+- Optimized geometry to reduce material usage and manufacturing time.  
+- Reduced material consumption to approximately 50g (from previous 300g).  
+- Decreased total print time to 2.5 hours.
+- New version still uses 4 pieces.
+
+---
