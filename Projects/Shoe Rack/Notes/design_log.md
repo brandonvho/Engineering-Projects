@@ -126,3 +126,15 @@ The Version 1 design was unnecessarily complex and better suited for rotational 
 - New version still uses 4 pieces.
 
 ---
+
+## Date: February 15, 2026
+
+### Note: 
+- shoe rack bracket v2 fits tightly onto the wood. Requires firm pressure or rubber mallet. If bracket breaks or cracks i might change the spacing to 0.77 -> 0.78 inch. Current print uses 2 layer wall and 15% infill. If more strength is needed, those settings can be adjusted. The current design has trapezoids on the bottom and top has a peg and hole to keep the legs in place. It is enough to keep them from sliding especially when the wooden boards have weight. However, the wood is warped and causes the legs to sometimes be at an angle. I have decided to change the trapezoid shape to a square peg and hole. The trapezoid is more aesthetically pleasing, so i might adjust the shape and height to fit better when the legs are not perfectly aligned. 
+
+---
+
+## Date: February 16, 2026
+
+### Note:
+- I created transition pieces to allow v2.3 to stack on v2.0 so i dont waste material. V2.3 is the final product so far. It holds the frames together despite the wood being warped.
