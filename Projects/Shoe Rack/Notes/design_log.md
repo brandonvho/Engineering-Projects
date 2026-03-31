@@ -137,4 +137,4 @@ The Version 1 design was unnecessarily complex and better suited for rotational 
 ## Date: February 16, 2026
 
 ### Note:
-- I created transition pieces to allow v2.3 to stack on v2.0 so i dont waste material. V2.3 is the final product so far. It holds the frames together despite the wood being warped.
+- I created transition pieces to allow v2.2 to stack on v2.0 so i dont waste material. V2.2 is the final product so far. It holds the frames together despite the wood being warped.
