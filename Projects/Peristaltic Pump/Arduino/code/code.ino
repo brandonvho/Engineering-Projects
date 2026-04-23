@@ -5,7 +5,7 @@
 // --- Stepper Configuration ---
 const int STEPS_PER_REV = 2048; // Number of steps per full rotation (depends on your stepper)
 const float ML_PER_REV = 1.2;   // How many mL your pump dispenses per one full rotation
-                                 // You must calibrate this for your system
+                                 // Must be calibrated
 
 // Initialize stepper motor
 // Pins 8, 10, 9, 11 are connected to IN1-IN4 of ULN2003 driver board
