@@ -71,3 +71,25 @@
 - Test-fit the rotor onto the motor shaft and confirm bearing seats hold bearings securely.
 - Assemble the base and rotor and evaluate clearances before designing the pump body outer shell.
 - Begin tubing path design once rotor geometry is confirmed.
+
+## 04/28/26 — Session 4: Print Inspection & Revision Planning
+ 
+**Work completed**
+- Inspected both printed parts against the stepper motor and bearings.
+**Issues**
+- **Motor base — axle hole undersized:** The hole for the stepper motor axle is too small; the motor does not sit flush against the base, causing the axis of rotation to be non-perpendicular.
+- **Motor base — insufficient thickness:** The base is too thin; the M3 mounting screws protrude far enough to contact the bearing rotor during rotation.
+- **Motor base — M3 screw holes:** Hole sizing for the M3 mounting screws is correct — they self-tap without needing threaded inserts.
+- **Bearing rotor — peg diameter undersized:** The pegs that retain the bearings are too small; bearings seat loosely and fall off easily.
+- **Bearing rotor — no tube clearance:** There is no gap between the bearing and the outer wall, leaving no space for the silicone tube to pass through.
+**Notes**
+- All identified issues are dimensional — small sizing and fitment adjustments in Fusion, no geometry rethink required for the base.
+- The rotor will undergo a more significant design change: the cross-shaped arm profile will be replaced with a zig-zag (spring) profile so each arm flexes slightly, maintaining constant radial pressure on the tube. This ensures the bearing stays in contact with the tube throughout rotation, preserving vacuum and consistent flow.
+- Tube clearance will be added between the bearing OD and the outer wall as part of the same rotor revision.
+**Next**
+- Increase axle hole diameter on the motor base so the motor seats flush and the shaft is perpendicular.
+- Increase base thickness so M3 screws do not reach the rotor sweep zone.
+- Increase bearing peg diameter on the rotor so bearings are held securely.
+- Add radial clearance between bearing OD and outer wall to accommodate the silicone tube.
+- Redesign rotor arm profile from cross to zig-zag to introduce spring-like compliance and maintain tube pressure.
+- Reprint both parts and re-inspect.
