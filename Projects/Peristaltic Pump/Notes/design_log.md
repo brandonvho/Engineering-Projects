@@ -51,41 +51,51 @@
 - The 28BYJ-48 at 10–12 RPM is slow but sufficient for functional testing. Torque may be insufficient for stiffer tubing — this will inform whether the NEMA 17 upgrade is necessary.
 
 **Next**
-- Design the pump body, rotor, and roller arm in Fusion. 
+- Design the pump body, rotor, and roller arm in Fusion.
 - Calculate theoretical volume per revolution from tube inner diameter and rotor geometry; compare to measured value after printing.
 - Calibrate `ML_PER_REV` empirically: run a fixed number of revolutions, measure displaced volume, divide.
 
+---
+
 ## 04/23/26 — Session 3: CAD – Motor Base & Bearing Rotor
- 
+
 **Work completed**
 - Designed the stepper motor base in Fusion 360 — a mounting platform that the stepper bolts to, forming the structural base of the full pump assembly.
 - Designed the bearing rotor in Fusion 360 — the rotating element that holds the bearings which will squeeze the tube against the pump body wall to create peristaltic action.
 - Sent both parts to the printer.
+
 **Issues**
 - None identified at this stage — fit and tolerance will be assessed once the print is complete.
+
 **Notes**
 - Both parts are currently printing; dimensional accuracy of the bearing rotor (especially bearing pocket depth and diameter) is critical — bearings must seat firmly without play.
 - The rotor-to-motor shaft interface should be checked for fit before assembling; reprint with adjusted tolerance if the shaft is loose or won't seat.
+
 **Next**
 - Inspect prints for dimensional accuracy and layer quality.
 - Test-fit the rotor onto the motor shaft and confirm bearing seats hold bearings securely.
 - Assemble the base and rotor and evaluate clearances before designing the pump body outer shell.
 - Begin tubing path design once rotor geometry is confirmed.
 
+---
+
 ## 04/28/26 — Session 4: Print Inspection & Revision Planning
- 
+
 **Work completed**
 - Inspected both printed parts against the stepper motor and bearings.
+
 **Issues**
 - **Motor base — axle hole undersized:** The hole for the stepper motor axle is too small; the motor does not sit flush against the base, causing the axis of rotation to be non-perpendicular.
 - **Motor base — insufficient thickness:** The base is too thin; the M3 mounting screws protrude far enough to contact the bearing rotor during rotation.
 - **Motor base — M3 screw holes:** Hole sizing for the M3 mounting screws is correct — they self-tap without needing threaded inserts.
 - **Bearing rotor — peg diameter undersized:** The pegs that retain the bearings are too small; bearings seat loosely and fall off easily.
 - **Bearing rotor — no tube clearance:** There is no gap between the bearing and the outer wall, leaving no space for the silicone tube to pass through.
+
 **Notes**
 - All identified issues are dimensional — small sizing and fitment adjustments in Fusion, no geometry rethink required for the base.
 - The rotor will undergo a more significant design change: the cross-shaped arm profile will be replaced with a zig-zag (spring) profile so each arm flexes slightly, maintaining constant radial pressure on the tube. This ensures the bearing stays in contact with the tube throughout rotation, preserving vacuum and consistent flow.
 - Tube clearance will be added between the bearing OD and the outer wall as part of the same rotor revision.
+
 **Next**
 - Increase axle hole diameter on the motor base so the motor seats flush and the shaft is perpendicular.
 - Increase base thickness so M3 screws do not reach the rotor sweep zone.
@@ -94,12 +104,14 @@
 - Redesign rotor arm profile from cross to zig-zag to introduce spring-like compliance and maintain tube pressure.
 - Reprint both parts and re-inspect.
 
+---
+
 ## 04/28/26 — Session 5: Sketch Troubleshooting
- 
+
 **Work completed**
 - Conducted a full review of the sketch and resolved all identified issues from initial review through hardware testing. Motor is now running correctly at constant speed with working cancel, progress display, and stable LCD.
+
 **Issues**
- 
 - **Initial sketch review — multiple issues before hardware testing:** The first sketch had a blocking `step(N)` call that locked the CPU for the entire dispense with no cancel path, no decimal input, no input length or volume validation, 16-space LCD line clearing causing flicker, and no progress feedback during dispensing. All were rewritten into the first improved version.
 - **`*` cancel not working during dispense:** The keypad check was placed after the `if (state == DISPENSING)` return, so it never executed while the motor was moving. Fixed by moving the keypad read inside the dispensing branch, before `runOneStep()`.
 - **LCD text overflow — "mL" getting cut off:** The string `"Dispensing " + volume + "mL"` exceeded the 16-character display width. Fixed by shortening line 0 to just the volume (e.g. `"5.0 mL"`) and placing the cancel hint on line 1 (`"Running [*]=stop"`).
@@ -112,25 +124,32 @@
 - **Unwanted acceleration and deceleration:** `AccelStepper.run()` acceleration ramp felt unnatural for a pump application. Fixed by switching to `runSpeedToPosition()` with a fixed `setSpeed(400)` called after `move()`, which runs at constant speed with no ramp and ignores `setAcceleration()` entirely.
 - **Typo compile error — `myStpper` not declared:** A typo in the `setSpeed` call caused a compile error. Fixed by correcting the spelling to `myStepper`.
 - **RW pin — LCD blank on first breadboard build:** The RW (read/write) pin on the LCD1602 was left unconnected. It must be tied to GND for write-only operation — leaving it floating prevents any display output regardless of all other wiring being correct.
+
 **Notes**
 - `AccelStepper` with `runSpeedToPosition()` and `setSpeed()` is now the correct pattern for this use case — constant speed, no ramp, respects `distanceToGo()`.
 - Power separation between the Arduino 5V rail and the ULN2003 driver is essential; any future motor upgrades should be treated the same way.
 - Pin order on the ULN2003 must be verified against `AccelStepper`'s expected sequence whenever rewiring — coil fight is silent and hard to diagnose.
-- Speed was set to setSpeed(350) — determined to be the fastest speed at which the motor retains enough torque to run without stalling.
+- Speed was set to `setSpeed(350)` — determined to be the fastest speed at which the motor retains enough torque to run without stalling.
+
 **Next**
 - Calibrate `ML_PER_REV` once the revised rotor and base are printed and tube is installed.
 - Create housing for circuit board and mounts for the screen and keypad.
 
+---
+
 ## 04/28/26 — Session 6: First Full Assembly Test
- 
+
 **Work completed**
 - Confirmed all electrical components are functioning correctly together — motor runs, LCD displays correctly, keypad input works, cancel works.
+
 **Issues**
 - **No vacuum — tube not drawing water:** The tube is not being squeezed sufficiently to create a vacuum and draw water up. Tube clearance between the bearing and the outer wall needs to be reduced so the bearing compresses the tube fully.
 - **Bearing lifting and squeezing off-center:** The bearing does not press straight down onto the tube — it shifts slightly to the side, meaning contact is not perpendicular throughout the rotation. This breaks the seal and prevents consistent peristaltic action.
+
 **Notes**
 - Electrically the system is complete and functioning; remaining issues are purely mechanical.
 - Both problems are likely related — a bearing that can drift laterally will also fail to compress the tube consistently.
+
 **Next**
 - Increase bearing size to improve contact area and reduce the tendency to shift laterally.
 - Add side walls to the rotor to constrain the bearing and tube laterally, keeping them aligned with each other throughout the full circumference.
