@@ -1,22 +1,55 @@
-#include <LiquidCrystal.h>
-#include <Stepper.h>
-#include <Keypad.h>
+#include <LiquidCrystal.h>   // Controls the 16x2 LCD display
+#include <AccelStepper.h>    // Non-blocking stepper control with speed/acceleration
+#include <Keypad.h>          // Reads key presses from the 4x4 membrane keypad
 
-// ── Pump calibration ────────────────────────────────────────────────
-const int   STEPS_PER_REV  = 2048;   // 28BYJ-48 full-step count
-const float ML_PER_REV     = 1.2;    // mL per revolution — CALIBRATE THIS
-const int   MOTOR_RPM      = 12;     // Tune for your tubing/roller geometry
-const float MAX_VOLUME_ML  = 999.9;  // Safety ceiling
-const byte  MAX_INPUT_LEN  = 5;      // e.g. "999.9"
+// ══════════════════════════════════════════════════════════════════════
+// PUMP CALIBRATION
+// These are the two values you will need to measure and adjust once
+// the physical pump body is assembled and tubing is installed.
+// ══════════════════════════════════════════════════════════════════════
 
-// ── Pin assignments ──────────────────────────────────────────────────
-// Stepper: IN1-IN4 of ULN2003 → Arduino pins (interleaved for 28BYJ-48)
-Stepper myStepper(STEPS_PER_REV, 8, 10, 9, 11);
+const int   STEPS_PER_REV = 2048;  // Number of steps for one full rotation of the
+                                    // 28BYJ-48 stepper motor in full-step mode via
+                                    // the ULN2003 driver board
 
-// LCD: RS, EN, D4, D5, D6, D7
+const float ML_PER_REV    = 1.2;   // How many mL of liquid the pump dispenses per
+                                    // one full motor revolution. This must be
+                                    // calibrated empirically: run a known number of
+                                    // revolutions, measure the displaced volume with
+                                    // a syringe, then divide volume by revolutions.
+
+const float MAX_VOLUME_ML = 999.9; // Maximum volume the user is allowed to enter (mL).
+                                    // Prevents accidental extremely long motor runs.
+
+const byte  MAX_INPUT_LEN = 5;     // Maximum number of characters in the volume input
+                                    // field (e.g. "999.9" = 5 chars including the dot).
+
+// ══════════════════════════════════════════════════════════════════════
+// COMPONENT SETUP
+// ══════════════════════════════════════════════════════════════════════
+
+// Stepper motor driver
+// FULL4WIRE mode fires the 4 coils in the correct sequence for the 28BYJ-48.
+// Pin order matches the physical wiring to the ULN2003 board:
+//   IN1 → D8,  IN2 → D9,  IN3 → D10,  IN4 → D11
+// Note: D9 and D10 were physically swapped during wiring to fix coil
+// fight / shaking — this pin order reflects the corrected wiring.
+AccelStepper myStepper(AccelStepper::HALF4WIRE, 8, 10, 9, 11);
+
+// LCD1602 display
+// Arguments: RS, Enable, D4, D5, D6, D7
+// RW pin (pin 5 on LCD) must be tied to GND for write-only operation —
+// leaving it floating causes a blank display even if all other wiring is correct.
+// Backlight anode (pin 15) requires a 220Ω current-limiting resistor to 5V.
+// Contrast (pin 3 / V0) is set via a 10kΩ potentiometer wiper between 5V and GND.
 LiquidCrystal lcd(12, 7, 5, 4, 3, 2);
 
-// Keypad
+// 4x4 membrane keypad
+// Physical layout:
+//   [ 1 ][ 2 ][ 3 ][ A ]  ← A = decimal point
+//   [ 4 ][ 5 ][ 6 ][ B ]  ← B unused
+//   [ 7 ][ 8 ][ 9 ][ C ]  ← C unused
+//   [ * ][ 0 ][ # ][ D ]  ← * = clear/stop,  # = confirm/run,  D unused
 const byte ROWS = 4, COLS = 4;
 char keys[ROWS][COLS] = {
   {'1','2','3','A'},
@@ -24,86 +57,123 @@ char keys[ROWS][COLS] = {
   {'7','8','9','C'},
   {'*','0','#','D'}
 };
-byte rowPins[ROWS] = {22, 23, 24, 25};
-byte colPins[COLS] = {26, 27, 28, 29};
+byte rowPins[ROWS] = {22, 23, 24, 25};  // Arduino pins connected to keypad rows
+byte colPins[COLS] = {26, 27, 28, 29};  // Arduino pins connected to keypad columns
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-// ── State ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// STATE MACHINE
+// The program runs in one of two states at any time:
+//   ENTERING   — waiting for the user to type a volume on the keypad
+//   DISPENSING — motor is running, keypad only checks for cancel (*)
+// ══════════════════════════════════════════════════════════════════════
 enum State { ENTERING, DISPENSING };
 State state = ENTERING;
 
-String  inputVolume   = "";
-bool    hasDecimal    = false;
-long    stepsRemaining = 0;
-long    totalSteps    = 0;
+// ── Runtime variables ─────────────────────────────────────────────────
+String inputVolume = "";    // Accumulates the keypad digits as a string (e.g. "12.5")
+bool   hasDecimal  = false; // Tracks whether a decimal point has already been entered
+                             // so a second '.' keypress is ignored
+long   totalSteps  = 0;     // Total steps calculated for the current dispense run,
+                             // used to compute the progress percentage
 
-// ── Helpers ──────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════
 
-// Print a string left-padded to 16 chars to avoid flicker
+// Prints a string on the specified LCD row (0 = top, 1 = bottom).
+// Pads with trailing spaces to exactly 16 characters, which overwrites any
+// leftover characters from a previous longer string without calling lcd.clear()
+// (which would cause visible flicker).
 void lcdPrintLine(byte row, String text) {
   lcd.setCursor(0, row);
   while (text.length() < 16) text += ' ';
   lcd.print(text);
 }
 
+// Displays the volume entry prompt on the LCD.
+// Top line: static label.  Bottom line: current input, or "_" if empty.
 void showEnterPrompt() {
   lcdPrintLine(0, "Volume (mL):");
   lcdPrintLine(1, inputVolume.length() ? inputVolume : "_");
 }
 
-// ── Setup ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// SETUP — runs once on power-on or reset
+// ══════════════════════════════════════════════════════════════════════
 void setup() {
-  lcd.begin(16, 2);
-  myStepper.setSpeed(MOTOR_RPM);
-  showEnterPrompt();
+  lcd.begin(16, 2);             // Initialise LCD as 16 columns, 2 rows
+
+  myStepper.setMaxSpeed(500);   // Hard ceiling on step rate (steps/sec).
+                                 // The 28BYJ-48 loses torque above ~500 steps/sec
+                                 // so keeping this at or below 500 avoids skipping.
+
+  showEnterPrompt();            // Show the initial volume entry screen
 }
 
-// ── Main loop ────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// MAIN LOOP — runs repeatedly
+// ══════════════════════════════════════════════════════════════════════
 void loop() {
+
+  // ── DISPENSING state ──────────────────────────────────────────────
+  // While the motor is running, skip normal keypad handling and only
+  // check for an emergency stop (*). Then advance the motor one step.
   if (state == DISPENSING) {
+    char key = keypad.getKey();
+    if (key == '*') {
+      // Emergency stop: sets the motor's current position as its target,
+      // making distanceToGo() immediately return 0 and halting the run.
+      // myStepper.stop() is NOT used here because it decelerates gradually,
+      // which means distanceToGo() stays non-zero and the done branch
+      // in runOneStep() never triggers.
+      myStepper.setCurrentPosition(myStepper.currentPosition());
+    }
     runOneStep();
-    return;               // Keep keypad responsive during dispense
+    return; // Skip the rest of loop() — no normal keypad input while dispensing
   }
 
+  // ── ENTERING state ────────────────────────────────────────────────
   char key = keypad.getKey();
-  if (!key) return;
+  if (!key) return; // No key pressed this cycle, nothing to do
 
-  // ── Digit ─────────────────────────────────────────────────────────
+  // ── Digit keys (0–9) ──────────────────────────────────────────────
   if (key >= '0' && key <= '9') {
     if (inputVolume.length() < MAX_INPUT_LEN) {
-      // Prevent leading zeros (except "0.")
+      // Prevent multiple leading zeros (e.g. "00" is not valid)
+      // but allow "0." as a valid start for values less than 1 mL
       if (!(inputVolume == "0" && key == '0')) {
         inputVolume += key;
         showEnterPrompt();
       }
     }
+    // Silently ignore input beyond MAX_INPUT_LEN characters
 
-  // ── Decimal point (A key) ─────────────────────────────────────────
+  // ── A key — decimal point ─────────────────────────────────────────
   } else if (key == 'A') {
+    // Only insert a decimal if one hasn't been added yet, and there is
+    // still room for at least one digit after it
     if (!hasDecimal && inputVolume.length() < MAX_INPUT_LEN - 1) {
-      if (inputVolume.length() == 0) inputVolume = "0";
+      if (inputVolume.length() == 0) inputVolume = "0"; // Prefix bare "." with "0"
       inputVolume += '.';
       hasDecimal = true;
       showEnterPrompt();
     }
 
-  // ── Clear / Cancel ────────────────────────────────────────────────
+  // ── * key — clear input ───────────────────────────────────────────
   } else if (key == '*') {
-    if (state == DISPENSING) {
-      // Emergency stop
-      stepsRemaining = 0;
-    } else {
-      inputVolume = "";
-      hasDecimal  = false;
-      showEnterPrompt();
-    }
+    inputVolume = "";
+    hasDecimal  = false;
+    showEnterPrompt();
 
-  // ── Confirm ───────────────────────────────────────────────────────
+  // ── # key — confirm and start dispensing ─────────────────────────
   } else if (key == '#') {
+    // Reject empty input or a bare zero
     if (inputVolume.length() == 0 || inputVolume == "0") return;
 
     float volume = inputVolume.toFloat();
 
+    // Validate range — reject zero, negative, or over the safety ceiling
     if (volume <= 0 || volume > MAX_VOLUME_ML) {
       lcdPrintLine(0, "Bad volume!");
       lcdPrintLine(1, "Max: 999.9 mL");
@@ -114,38 +184,54 @@ void loop() {
       return;
     }
 
-    // Start dispensing
-    totalSteps     = (long)((volume / ML_PER_REV) * STEPS_PER_REV);
-    stepsRemaining = totalSteps;
-    state          = DISPENSING;
+    // Calculate how many motor steps are needed to dispense the requested volume.
+    // Formula: (volume / mL_per_rev) gives the number of revolutions needed,
+    // multiplied by steps_per_rev to convert to steps.
+    totalSteps = (long)((volume / ML_PER_REV) * STEPS_PER_REV);
 
-    lcdPrintLine(0, "Dispensing " + String(volume, 1) + "mL");
-    lcdPrintLine(1, "[*] to cancel");
+    myStepper.move(totalSteps);  // Queue the target position (relative move)
+    myStepper.setSpeed(350);     // Set constant run speed (steps/sec).
+                                  // runSpeedToPosition() uses this value directly
+                                  // and ignores any acceleration ramp.
+    state = DISPENSING;          // Switch state machine to dispensing mode
+
+    lcdPrintLine(0, String(volume, 1) + " mL");  // e.g. "5.0 mL"
+    lcdPrintLine(1, "Running [*]=stop");
   }
 }
 
-// ── Non-blocking single-step dispense ────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// NON-BLOCKING STEP FUNCTION
+// Called once per loop() tick while in DISPENSING state.
+// Advances the motor by one step if it's time to do so, and updates
+// the progress display. When the target is reached (or the run is
+// cancelled) it resets the state machine back to ENTERING.
+// ══════════════════════════════════════════════════════════════════════
 void runOneStep() {
-  if (stepsRemaining > 0) {
-    myStepper.step(1);
-    stepsRemaining--;
+  if (myStepper.distanceToGo() != 0) {
+    // runSpeedToPosition() moves toward the target at the fixed speed set
+    // by setSpeed(). Unlike run(), it ignores acceleration, giving a smooth
+    // constant-speed dispense with no ramp up or ramp down.
+    myStepper.runSpeedToPosition();
 
-    // Update progress every 64 steps to avoid LCD overhead
-    if (stepsRemaining % 64 == 0) {
-      int pct = (int)(100L * (totalSteps - stepsRemaining) / totalSteps);
+    // Update the progress percentage on the LCD.
+    // Only recalculate every 64 steps to avoid spending too much time on
+    // LCD writes, which are slow and would otherwise slow the step rate.
+    long remaining = abs(myStepper.distanceToGo());
+    if (remaining % 64 == 0) {
+      int pct = (int)(100L * (totalSteps - remaining) / totalSteps);
       lcdPrintLine(1, "Progress: " + String(pct) + "%  ");
     }
+
   } else {
-    // Done
+    // distanceToGo() == 0 means either the run completed normally,
+    // or the emergency stop zeroed out the target position.
     state      = ENTERING;
     inputVolume = "";
     hasDecimal  = false;
-
-    bool cancelled = (stepsRemaining == 0 && totalSteps > 0 &&
-                      keypad.getKey() == '*');
-    lcdPrintLine(0, cancelled ? "Cancelled." : "Done!");
+    lcdPrintLine(0, "Done!");
     lcdPrintLine(1, "");
-    delay(1500);
-    showEnterPrompt();
+    delay(1500);          // Pause so the user can read the done message
+    showEnterPrompt();    // Return to the volume entry screen
   }
 }

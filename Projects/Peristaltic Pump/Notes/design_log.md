@@ -93,3 +93,30 @@
 - Add radial clearance between bearing OD and outer wall to accommodate the silicone tube.
 - Redesign rotor arm profile from cross to zig-zag to introduce spring-like compliance and maintain tube pressure.
 - Reprint both parts and re-inspect.
+
+## 04/28/26 — Session 5: Sketch Troubleshooting
+ 
+**Work completed**
+- Conducted a full review of the sketch and resolved all identified issues from initial review through hardware testing. Motor is now running correctly at constant speed with working cancel, progress display, and stable LCD.
+**Issues**
+ 
+- **Initial sketch review — multiple issues before hardware testing:** The first sketch had a blocking `step(N)` call that locked the CPU for the entire dispense with no cancel path, no decimal input, no input length or volume validation, 16-space LCD line clearing causing flicker, and no progress feedback during dispensing. All were rewritten into the first improved version.
+- **`*` cancel not working during dispense:** The keypad check was placed after the `if (state == DISPENSING)` return, so it never executed while the motor was moving. Fixed by moving the keypad read inside the dispensing branch, before `runOneStep()`.
+- **LCD text overflow — "mL" getting cut off:** The string `"Dispensing " + volume + "mL"` exceeded the 16-character display width. Fixed by shortening line 0 to just the volume (e.g. `"5.0 mL"`) and placing the cancel hint on line 1 (`"Running [*]=stop"`).
+- **Motor reversing mid-run:** The standard Arduino `Stepper` library is not designed for single-step non-blocking use. Calling `step(1)` repeatedly in a loop confused its internal timing and caused the 28BYJ-48 to stutter and reverse. Fixed by replacing the `Stepper` library with `AccelStepper`, which handles coil sequencing and timing correctly for this pattern.
+- **Motor not moving, progress stuck at 0%:** After switching to `AccelStepper`, `runSpeed()` was used instead of `run()`. `runSpeed()` ignores the target set by `move()` and runs indefinitely without checking `distanceToGo()`, so the progress counter never incremented. Fixed by replacing `runSpeed()` with `run()`.
+- **Motor trying but not moving:** `AccelStepper.run()` uses an acceleration ramp; without `setAcceleration()` defined it defaulted to zero, so the motor never ramped up to a usable speed. Fixed by adding `myStepper.setAcceleration(200)` in `setup()`.
+- **Screen going blank:** The stepper motor drawing current from the Arduino's 5V pin was browning out the board and killing the LCD. Fixed by powering the ULN2003 driver board from the kit's external power supply module instead of the Arduino's 5V rail.
+- **`*` emergency stop not working after `AccelStepper` switch:** `myStepper.stop()` decelerates gradually rather than halting instantly, so `distanceToGo()` remained non-zero and the done/cancelled branch in `runOneStep()` never triggered. Fixed by replacing `myStepper.stop()` with `myStepper.setCurrentPosition(myStepper.currentPosition())`, which immediately zeros `distanceToGo()`.
+- **Motor shaking and fighting itself:** The coils were firing in the wrong sequence, causing them to oppose each other. Root cause was a mismatch between `AccelStepper`'s expected pin order and the physical ULN2003 wiring. Fixed by physically swapping the D9 and D10 wires on the ULN2003 board rather than changing the code.
+- **Unwanted acceleration and deceleration:** `AccelStepper.run()` acceleration ramp felt unnatural for a pump application. Fixed by switching to `runSpeedToPosition()` with a fixed `setSpeed(400)` called after `move()`, which runs at constant speed with no ramp and ignores `setAcceleration()` entirely.
+- **Typo compile error — `myStpper` not declared:** A typo in the `setSpeed` call caused a compile error. Fixed by correcting the spelling to `myStepper`.
+- **RW pin — LCD blank on first breadboard build:** The RW (read/write) pin on the LCD1602 was left unconnected. It must be tied to GND for write-only operation — leaving it floating prevents any display output regardless of all other wiring being correct.
+**Notes**
+- `AccelStepper` with `runSpeedToPosition()` and `setSpeed()` is now the correct pattern for this use case — constant speed, no ramp, respects `distanceToGo()`.
+- Power separation between the Arduino 5V rail and the ULN2003 driver is essential; any future motor upgrades should be treated the same way.
+- Pin order on the ULN2003 must be verified against `AccelStepper`'s expected sequence whenever rewiring — coil fight is silent and hard to diagnose.
+- Speed was set to setSpeed(350) — determined to be the fastest speed at which the motor retains enough torque to run without stalling.
+**Next**
+- Calibrate `ML_PER_REV` once the revised rotor and base are printed and tube is installed.
+- Create housing for circuit board and mounts for the screen and keypad.
