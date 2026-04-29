@@ -120,3 +120,19 @@
 **Next**
 - Calibrate `ML_PER_REV` once the revised rotor and base are printed and tube is installed.
 - Create housing for circuit board and mounts for the screen and keypad.
+
+## 04/28/26 — Session 6: First Full Assembly Test
+ 
+**Work completed**
+- Confirmed all electrical components are functioning correctly together — motor runs, LCD displays correctly, keypad input works, cancel works.
+**Issues**
+- **No vacuum — tube not drawing water:** The tube is not being squeezed sufficiently to create a vacuum and draw water up. Tube clearance between the bearing and the outer wall needs to be reduced so the bearing compresses the tube fully.
+- **Bearing lifting and squeezing off-center:** The bearing does not press straight down onto the tube — it shifts slightly to the side, meaning contact is not perpendicular throughout the rotation. This breaks the seal and prevents consistent peristaltic action.
+**Notes**
+- Electrically the system is complete and functioning; remaining issues are purely mechanical.
+- Both problems are likely related — a bearing that can drift laterally will also fail to compress the tube consistently.
+**Next**
+- Increase bearing size to improve contact area and reduce the tendency to shift laterally.
+- Add side walls to the rotor to constrain the bearing and tube laterally, keeping them aligned with each other throughout the full circumference.
+- Adjust tube clearance so the bearing compresses the tube fully and creates a proper vacuum seal.
+- Reprint rotor and retest.
