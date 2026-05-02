@@ -118,16 +118,13 @@
 - **Motor reversing mid-run:** The standard Arduino `Stepper` library is not designed for single-step non-blocking use. Calling `step(1)` repeatedly in a loop confused its internal timing and caused the 28BYJ-48 to stutter and reverse. Fixed by replacing the `Stepper` library with `AccelStepper`, which handles coil sequencing and timing correctly for this pattern.
 - **Motor not moving, progress stuck at 0%:** After switching to `AccelStepper`, `runSpeed()` was used instead of `run()`. `runSpeed()` ignores the target set by `move()` and runs indefinitely without checking `distanceToGo()`, so the progress counter never incremented. Fixed by replacing `runSpeed()` with `run()`.
 - **Motor trying but not moving:** `AccelStepper.run()` uses an acceleration ramp; without `setAcceleration()` defined it defaulted to zero, so the motor never ramped up to a usable speed. Fixed by adding `myStepper.setAcceleration(200)` in `setup()`.
-- **Screen going blank:** The stepper motor drawing current from the Arduino's 5V pin was browning out the board and killing the LCD. Fixed by powering the ULN2003 driver board from the kit's external power supply module instead of the Arduino's 5V rail.
 - **`*` emergency stop not working after `AccelStepper` switch:** `myStepper.stop()` decelerates gradually rather than halting instantly, so `distanceToGo()` remained non-zero and the done/cancelled branch in `runOneStep()` never triggered. Fixed by replacing `myStepper.stop()` with `myStepper.setCurrentPosition(myStepper.currentPosition())`, which immediately zeros `distanceToGo()`.
 - **Motor shaking and fighting itself:** The coils were firing in the wrong sequence, causing them to oppose each other. Root cause was a mismatch between `AccelStepper`'s expected pin order and the physical ULN2003 wiring. Fixed by physically swapping the D9 and D10 wires on the ULN2003 board rather than changing the code.
 - **Unwanted acceleration and deceleration:** `AccelStepper.run()` acceleration ramp felt unnatural for a pump application. Fixed by switching to `runSpeedToPosition()` with a fixed `setSpeed(400)` called after `move()`, which runs at constant speed with no ramp and ignores `setAcceleration()` entirely.
-- **Typo compile error — `myStpper` not declared:** A typo in the `setSpeed` call caused a compile error. Fixed by correcting the spelling to `myStepper`.
 - **RW pin — LCD blank on first breadboard build:** The RW (read/write) pin on the LCD1602 was left unconnected. It must be tied to GND for write-only operation — leaving it floating prevents any display output regardless of all other wiring being correct.
 
 **Notes**
 - `AccelStepper` with `runSpeedToPosition()` and `setSpeed()` is now the correct pattern for this use case — constant speed, no ramp, respects `distanceToGo()`.
-- Power separation between the Arduino 5V rail and the ULN2003 driver is essential; any future motor upgrades should be treated the same way.
 - Pin order on the ULN2003 must be verified against `AccelStepper`'s expected sequence whenever rewiring — coil fight is silent and hard to diagnose.
 - Speed was set to `setSpeed(350)` — determined to be the fastest speed at which the motor retains enough torque to run without stalling.
 
@@ -137,7 +134,7 @@
 
 ---
 
-## 04/28/26 — Session 6: First Full Assembly Test
+## 04/28/26 — Session 6: First Liquid Pump Test
 
 **Work completed**
 - Confirmed all electrical components are functioning correctly together — motor runs, LCD displays correctly, keypad input works, cancel works.
@@ -155,3 +152,171 @@
 - Add side walls to the rotor to constrain the bearing and tube laterally, keeping them aligned with each other throughout the full circumference.
 - Adjust tube clearance so the bearing compresses the tube fully and creates a proper vacuum seal.
 - Reprint rotor and retest.
+
+## 05/02/26 — Session 7: Bearing & Rotor Arm Redesign — Root Cause Analysis and Design Point Selection
+ 
+**Work completed**
+- Identified arm radius as the root cause of pump failure — not housing clearance.
+- Evaluated all five bearing candidates against torque, geometry, and structural constraints.
+- Selected 5×11×5 mm bearing at r = 9 mm as the recommended design point.
+- Updated sketch with new operating speed.
+
+**Root cause: torque budget** 
+Session 6 confirmed the motor, LCD, keypad, and cancel all work correctly, but the pump failed to draw water. Two symptoms were observed: insufficient tube occlusion and off-centre bearing contact. The mechanical root cause is the rotor arm radius, not the housing clearance — tightening clearance only increases the required compression force, which the motor cannot supply at r = 25 mm.
+ 
+Motor torque-speed model (linear approximation):
+ 
+```
+T_avail = 34.3 × (1 − RPM / 29.3)   [mN·m]
+Stall torque:       34.3 mN·m  (at 0 RPM)
+Zero-torque speed:  29.3 RPM   (at 1000 Hz step frequency, half-step mode)
+```
+ 
+At current operating point (`setSpeed(350)` → 10.25 RPM):
+ 
+```
+T_avail = 34.3 × (1 − 10.25 / 29.3) = 22.3 mN·m
+T_req   = Fc × r = 2.0 N × 25 mm   = 50.0 mN·m
+Deficit = 50.0 − 22.3              = 27.7 mN·m
+Max safe Fc at r = 25 mm           = 22.3 / 25 = 0.89 N
+Full occlusion requires Fc ≈ 2.0 N → motor cannot comply at any speed
+```
+ 
+Reducing clearance to force occlusion would stall the motor before the tube fully closes. The arm radius must be reduced, which requires a smaller bearing so rollers do not overlap at 120° spacing.
+ 
+**Bearing candidate evaluation**
+Governing equations:
+ 
+```
+Fc       = 2.0 × (L / 5)   [N]    — compression force scaled by contact width L
+                                      relative to 5 mm reference (E_silicone ≈ 2 MPa,
+                                      δ = 1.5 mm occlusion, thin-shell ring model)
+T_req    = Fc × r_arm       [mN·m] — torque required (1 active roller)
+r_min    = OD_bearing / √3  [mm]   — minimum arm radius, 3 rollers at 120°, no overlap
+gap      = r × √3 − OD      [mm]   — inter-roller edge clearance
+RPM_max  = 29.3 × (1 − (T_req + 8) / 34.3)   — max RPM for 8 mN·m margin
+sps      = RPM / 60 × 2048         — AccelStepper steps/sec
+Q        = π × 1.5² × 2π × r × (RPM / 60) / 1000   [mL/min]
+```
+ 
+| Bearing (ID×OD×W) | r_arm | Fc (N) | T_req (mN·m) | T_avail (mN·m) | Margin (mN·m) | sps | RPM | Q (mL/min) | Peg ID | Gap (mm) | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 3×8×4 mm | 8 mm | 1.6 | 12.8 | 22.6 | 9.8 | 341 | 10.0 | 3.56 | 3 mm | 5.86 | Fragile peg |
+| 3×10×4 mm | 10 mm | 1.6 | 16.0 | 24.9 | 8.9 | 273 | 8.0 | 3.56 | 3 mm | 7.32 | Fragile peg |
+| **5×11×5 mm** | **9 mm** | **2.0** | **18.0** | **26.1** | **8.1** | **239** | **7.0** | **2.80** | **5 mm** | **4.59** | **Recommended** |
+| 7×14×5 mm | 10 mm | 2.0 | 20.0 | 28.4 | 8.4 | 171 | 5.0 | 2.22 | 7 mm | 3.32 | 2nd choice |
+| 7×22×7 mm | ≥15 mm | 2.8 | ≥42.0 | 34.3 max | Deficit | — | — | — | 7 mm | — | Eliminated |
+| 4×13×5 mm (current) | 25 mm | 2.0 | 50.0 | 22.3 | −27.7 | 350 | 10.3 | 11.4 | 4 mm | 4.32 | Root cause |
+ 
+**Elimination reasoning**
+- **7×22×7 mm — exceeds motor stall torque:** The 22 mm OD forces r_min = 12.7 mm. At that radius T_req = 35.6 mN·m, which exceeds the motor stall torque of 34.3 mN·m. No operating point exists — eliminated.
+```
+r_min = 22 / √3          = 12.7 mm
+Fc    = 2.0 × (7/5)      = 2.8 N
+T_req = 2.8 × 12.7       = 35.6 mN·m  >  stall torque of 34.3 mN·m
+```
+
+- **3×8×4 mm and 3×10×4 mm — deprioritised on spring arm fatigue grounds:** Both show better torque margin and flow than the recommended option but require a 3 mm mounting peg. Static peg safety factors are adequate (see Stress Analysis below), but the zig-zag spring arm fatigue safety factor at the thinnest cross-section drops to 2.7 — insufficient margin for continuous cyclic loading once print voids and layer-line weakness are considered. Deprioritised, not eliminated; usable if a solid arm profile is substituted.
+
+**Stress analysis: peg and rotor arm**
+Two structures are analysed separately: the **peg** (cylindrical post the bearing mounts on) and the **rotor arm** (cantilever from motor hub to bearing).
+ 
+*Peg bending stress* — model: cantilever beam, circular cross-section, point load at bearing centre.
+ 
+```
+M_root    = Fc × (L_bearing / 2)
+Z         = π × d³ / 32            (section modulus, solid cylinder)
+σ_bending = M_root / Z
+τ_shear   = Fc / (π × d² / 4)      (direct shear at root)
+σ_vm      ≈ √(σ_bending² + 3τ²)    (von Mises)
+```
+ 
+| Bearing | d_peg | Fc (N) | M_root (N·mm) | Z (mm³) | σ_b (MPa) | τ (MPa) | σ_vm (MPa) | SF bulk | SF layer-line |
+|---|---|---|---|---|---|---|---|---|---|
+| 5×11×5 mm ★ | 5 mm | 2.0 | 5.0 | 12.27 | 0.41 | 0.10 | 0.42 | 119 | 60 |
+| 3×8×4 mm | 3 mm | 1.6 | 3.2 | 2.65 | 1.21 | 0.23 | 1.23 | 41 | 20 |
+ 
+Material properties (SF = safety factor = yield strength / stress):
+- PLA bulk tensile yield: 50 MPa
+- Inter-layer adhesion: ~25 MPa (~50% of bulk) — peg printed as vertical cylinder; occlusion force acts perpendicular to layer bonding (weakest direction for FDM)
+- Neither peg approaches yield failure under static load.
+*Rotor arm bending stress* — the arm is a cantilever of length r_arm loaded at the tip by Fc. Critical section is at the arm root.
+ 
+```
+M_arm = Fc × r_arm
+I     = w × h³ / 12    (rectangular section, bending about weak axis)
+c     = h / 2
+σ_arm = M_arm × c / I
+```
+ 
+Case A — solid rectangular arm:
+ 
+| Bearing | r_arm | M (N·mm) | Section w×h | I (mm⁴) | σ (MPa) | SF bulk | SF layer |
+|---|---|---|---|---|---|---|---|
+| 5×11×5 mm ★ | 9 mm | 18.0 | 8×5 mm | 83.3 | 0.54 | 93 | 46 |
+| 3×8×4 mm | 8 mm | 12.8 | 6×3 mm | 13.5 | 1.42 | 35 | 18 |
+ 
+Case B — zig-zag spring arm at minimum cross-section (Session 4 design intent):
+ 
+| Bearing | r_arm | M (N·mm) | Strip w×h | I (mm⁴) | σ (MPa) | SF bulk | SF layer | SF fatigue¹ |
+|---|---|---|---|---|---|---|---|---|
+| 5×11×5 mm ★ | 9 mm | 18.0 | 5×2.5 mm | 6.51 | 3.46 | 14.5 | 7.2 | 5.1 |
+| 3×8×4 mm | 8 mm | 12.8 | 3×2 mm | 2.0 | 6.40 | 7.8 | 3.9 | 2.7 |
+ 
+¹ PLA fatigue endurance limit estimated at 35% of UTS ≈ 17.5 MPa (no official S-N data for FDM PLA — treat as approximate). SF_fatigue = 17.5 / σ_max.
+ 
+The spring arm fatigue case — not peg yield — is the actual differentiating failure mode. The 3 mm peg is statically safe (SF = 41); it is deprioritised because the arm's minimum cross-section under thousands of cyclic compression events gives SF = 2.7, which is insufficient once print voids and layer-line weakness are considered.
+ 
+**Recommended design point — full worked calculations (5×11×5 mm at r = 9 mm)**
+```
+r_min          = 11 / √3                   = 6.35 mm  →  use 9 mm
+Inter-gap      = 9 × √3 − 11              = 4.59 mm  (rollers clear, tube fits)
+Fc             = 2.0 × (5/5)              = 2.0 N
+T_req          = 2.0 × 9                  = 18.0 mN·m
+sps            = 7.0 / 60 × 2048         = 239 steps/sec
+T_avail        = 34.3 × (1 − 7.0/29.3)   = 26.1 mN·m
+Margin         = 26.1 − 18.0             = 8.1 mN·m  (31% headroom)
+Q              = π×1.5² × 2π×9 × (7.0/60) / 1000  = 2.80 mL/min
+R_housing      ≈ r_arm + OD_bearing/2 + tube_wall_clearance − tube_wall
+               = 9 + 5.5 + 5 − 1.5       = 18 mm
+Housing OD     ≈ 36 mm  (vs current ~70 mm)
+ 
+Peg σ_bending  = (2.0 × 2.5) / (π×5³/32) = 0.41 MPa   SF = 119
+Arm σ (spring) = (18.0 × 1.25) / 6.51    = 3.46 MPa   SF_fatigue = 5.1
+ 
+Design note: bearing inner bore (5 mm) = tube OD (5 mm) — shared reference
+dimension simplifies housing geometry and peg sizing.
+```
+ 
+Reducing arm radius from 25 mm to 9 mm shrinks the housing inner diameter from ~70 mm to ~36 mm — significant reduction in footprint, print time, and material.
+ 
+**Issues**
+| Area | Issue | Resolution |
+|---|---|---|
+| Root cause | Arm radius too large — motor torque deficit of 27.7 mN·m at r = 25 mm | Reduce arm radius; select smaller bearing |
+| 7×22×7 mm bearing | T_req exceeds motor stall torque at minimum permissible radius | Eliminated |
+| 3 mm peg bearings | Spring arm fatigue SF = 2.7 — insufficient for cyclic load | Deprioritised; viable with solid arm profile |
+| Housing size | Current ~70 mm ID housing oversized for new rotor geometry | Housing inner diameter drops to ~36 mm at new design point |
+ 
+**Sketch changes made**
+```cpp
+// Before
+myStepper.setSpeed(350);   // 10.25 RPM, r = 25 mm, T_req > T_avail
+ 
+// After
+myStepper.setSpeed(239);   // 7.0 RPM, r = 9 mm, 31% torque margin
+// STEPS_PER_REV unchanged (2048, half-step mode)
+// ML_PER_REV must be recalibrated after reprint
+```
+ 
+**Notes**
+- 5×11×5 mm bearing at r = 9 mm is the primary choice — smallest bearing that clears the peg stress constraint, fits geometrically at 120° spacing, and delivers 31% torque margin.
+- 7×14×5 mm at r = 10 mm, 171 sps is the fallback — higher peg strength (7 mm ID), 8.4 mN·m margin, 2.22 mL/min flow. Preferred if the 5 mm peg proves insufficient under sustained load.
+- Bearing inner bore (5 mm) matches tube OD (5 mm) — convenient shared reference dimension for housing geometry and peg sizing.
+**Next**
+- Redesign rotor in Fusion: r = 9 mm arm, 5 mm peg diameter, zig-zag spring profile with minimum strip section ≥ 5×2.5 mm.
+- Reprint rotor and motor base.
+- Adjust housing clearance so bearing OD compresses tube 1.5 mm against wall (full occlusion).
+- Upload sketch with `setSpeed(239)`.
+- Empirically measure Fc: press one bearing into tube on a kitchen scale, record force at lumen closure.
+- Calibrate `ML_PER_REV` once assembly is complete.
