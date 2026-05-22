@@ -154,3 +154,24 @@
 - Determine the correct bearing size and arm radius together — changing one affects the other.
 - Add side walls to the rotor to constrain the bearing and tube laterally throughout the full circumference.
 - Reprint rotor once geometry is resolved and retest.
+
+## 05/21/26 — Session 7: Rotor Redesign – Geometry & Tube Containment
+ 
+**Work completed**
+- Reduced the orbital radius of the bearings so less force is required to compress the silicone tube against the outer wall, addressing the vacuum failure from Session 6.
+- Replaced the cross/arm rotor profile with a solid triangle connecting all bearing pegs, increasing structural rigidity and distributing load more evenly across the rotor body.
+- Added a housing cover around the tube and bearings to constrain lateral movement, preventing the tube from drifting out of alignment with the bearings during rotation.
+- Sent revised rotor to the printer.
+
+**Issues**
+- None identified at design stage — fit, compression, and tube alignment will be evaluated after the print completes.
+
+**Notes**
+- The triangle profile should be significantly stiffer than the arm design under compressive load; watch for any resonance or vibration at speed that wasn't present before.
+- The housing cover directly addresses the off-center bearing contact observed in Session 6 — if the tube still shifts, the clearance between cover walls and tube OD may need to be tightened further.
+- Orbital radius reduction changes the effective compression geometry; if vacuum is still insufficient, tube clearance can be reduced as a secondary adjustment.
+
+**Next**
+- Inspect print and test-fit bearings and tube.
+- Run a liquid test to confirm vacuum is achieved and tube stays centered throughout full rotation.
+- Calibrate `ML_PER_REV` once consistent flow is confirmed.
