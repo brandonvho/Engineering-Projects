@@ -8,11 +8,13 @@
 // the physical pump body is assembled and tubing is installed.
 // ══════════════════════════════════════════════════════════════════════
 
-const int   STEPS_PER_REV = 2048;  // Number of steps for one full rotation of the
-                                    // 28BYJ-48 stepper motor in full-step mode via
-                                    // the ULN2003 driver board
+const int   STEPS_PER_REV = 1600;  // Number of steps for one full rotation of the
+                                    // NEMA 17 stepper motor at 1/8 microstepping
+                                    // via the A4988 driver (200 full steps × 8).
+                                    // Adjust if you change the MS1/MS2/MS3 jumper
+                                    // settings on the A4988.
 
-const float ML_PER_REV    = 1.2;   // How many mL of liquid the pump dispenses per
+const float ML_PER_REV    = 1.0;   // How many mL of liquid the pump dispenses per
                                     // one full motor revolution. This must be
                                     // calibrated empirically: run a known number of
                                     // revolutions, measure the displaced volume with
@@ -29,12 +31,14 @@ const byte  MAX_INPUT_LEN = 5;     // Maximum number of characters in the volume
 // ══════════════════════════════════════════════════════════════════════
 
 // Stepper motor driver
-// FULL4WIRE mode fires the 4 coils in the correct sequence for the 28BYJ-48.
-// Pin order matches the physical wiring to the ULN2003 board:
-//   IN1 → D8,  IN2 → D9,  IN3 → D10,  IN4 → D11
-// Note: D9 and D10 were physically swapped during wiring to fix coil
-// fight / shaking — this pin order reflects the corrected wiring.
-AccelStepper myStepper(AccelStepper::HALF4WIRE, 8, 10, 9, 11);
+// DRIVER mode sends STEP and DIR signals to the A4988 driver board.
+// The A4988 handles all coil sequencing internally.
+//   STEP → D8,  DIR → D9
+// RESET and SLEEP pins on the A4988 must be bridged together.
+// MS1 and MS2 tied to 5V, MS3 to GND for 1/8 microstepping.
+// ENABLE tied to GND to keep the motor always enabled.
+// A 100µF capacitor must be placed across VMOT and GND on the A4988.
+AccelStepper myStepper(AccelStepper::DRIVER, 8, 9);
 
 // LCD1602 display
 // Arguments: RS, Enable, D4, D5, D6, D7
@@ -102,13 +106,13 @@ void showEnterPrompt() {
 // SETUP — runs once on power-on or reset
 // ══════════════════════════════════════════════════════════════════════
 void setup() {
-  lcd.begin(16, 2);             // Initialise LCD as 16 columns, 2 rows
+  lcd.begin(16, 2);              // Initialise LCD as 16 columns, 2 rows
 
-  myStepper.setMaxSpeed(500);   // Hard ceiling on step rate (steps/sec).
-                                 // The 28BYJ-48 loses torque above ~500 steps/sec
-                                 // so keeping this at or below 500 avoids skipping.
+  myStepper.setMaxSpeed(3000);   // Hard ceiling on step rate (steps/sec).
+                                  // The A4988 + NEMA 17 can handle much higher rates
+                                  // than the old 28BYJ-48; tune down if stalling occurs.
 
-  showEnterPrompt();            // Show the initial volume entry screen
+  showEnterPrompt();             // Show the initial volume entry screen
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -190,9 +194,11 @@ void loop() {
     totalSteps = (long)((volume / ML_PER_REV) * STEPS_PER_REV);
 
     myStepper.move(totalSteps);  // Queue the target position (relative move)
-    myStepper.setSpeed(300);     // Set constant run speed (steps/sec).
+    myStepper.setSpeed(1400);    // Set constant run speed (steps/sec).
                                   // runSpeedToPosition() uses this value directly
                                   // and ignores any acceleration ramp.
+                                  // Tune this value after calibration — the NEMA 17
+                                  // can run significantly faster than the old 28BYJ-48.
     state = DISPENSING;          // Switch state machine to dispensing mode
 
     lcdPrintLine(0, String(volume, 1) + " mL");  // e.g. "5.0 mL"

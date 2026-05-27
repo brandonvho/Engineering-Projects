@@ -155,6 +155,8 @@
 - Add side walls to the rotor to constrain the bearing and tube laterally throughout the full circumference.
 - Reprint rotor once geometry is resolved and retest.
 
+---
+
 ## 05/21/26 — Session 7: Rotor Redesign – Geometry & Tube Containment
  
 **Work completed**
@@ -175,3 +177,55 @@
 - Inspect print and test-fit bearings and tube.
 - Run a liquid test to confirm vacuum is achieved and tube stays centered throughout full rotation.
 - Calibrate `ML_PER_REV` once consistent flow is confirmed.
+
+---
+
+## 05/22/26 — Session 8: Motor Upgrade Decision & Hardware Sourcing
+ 
+**Work completed**
+- Confirmed the 28BYJ-48 cannot be made to work in this application — stalling under compression was reproduced consistently across multiple test runs with the revised rotor.
+- Decided to proceed with the NEMA 17 upgrade using the A4988 driver, both of which were already identified as the target hardware in the project plan.
+
+**Issues**
+- None — this session was a decision and planning step following the stall failure in Session 7.
+
+**Notes**
+- The 28BYJ-48 is rated for low-torque motion tasks; continuous compression of silicone tubing is outside its capability regardless of rotor geometry.
+- The NEMA 17 was already planned as the production motor. The 28BYJ-48 prototype phase is complete.
+
+**Next**
+- Wire the NEMA 17 and A4988 to the Arduino.
+- Update the sketch for STEP/DIR control and revised `STEPS_PER_REV`.
+- Redesign the motor base to fit the NEMA 17 form factor.
+
+---
+ 
+## 05/26/26 — Session 9: Motor Upgrade – NEMA 17, A4988, Power Rewire & Sketch
+ 
+**Work completed**
+- Replaced the 28BYJ-48 stepper and ULN2003 driver with the NEMA 17 stepper motor and an A4988 driver board.
+- Rewired the breadboard for the A4988 STEP/DIR interface: STEP → D8, DIR → D9, ENABLE → GND, MS1 + MS2 → 5V rail (1/8 microstep, 1600 steps/rev), MS3 → GND, RESET and SLEEP bridged together. 100 µF capacitor placed across VMOT and GND on the A4988.
+- Removed the power supply module entirely. 9V barrel adapter now plugs directly into the Arduino barrel jack; Arduino VIN supplies 9V to A4988 VMOT; Arduino 5V supplies the breadboard + rail for all logic (LCD, keypad, A4988 VDD, MS pins). Arduino GND is the common ground for everything.
+- Updated the sketch for the A4988 STEP/DIR interface: switched `AccelStepper` from `HALF4WIRE` to `DRIVER` mode, updated `STEPS_PER_REV` from 2048 to 1600 (200 full steps × 8 microsteps), raised `setMaxSpeed` to 3000 and `setSpeed` to 1000. Motor confirmed running smoothly at 1000 steps/sec.
+
+**Issues**
+- **Motor jerking on first power-on:** VMOT was initially wired to the breadboard + rail, which only carries 5V from the PSU module regulator — well below the A4988's usable motor voltage. Moving VMOT to Arduino VIN (true 9V) resolved the jerk immediately.
+- **PSU module had no accessible 9V output:** The module's output rails are regulated to 5V (or 3.3V); no raw input voltage was exposed. Resolved by removing the module and powering logic from Arduino 5V instead.
+- **Pin conflict concern with D8/D9:** Initial wiring plan had LCD EN on D8 and LCD D4 on D9. Confirmed actual LCD wiring (RS=12, EN=7, D4–D7=5,4,3,2) left D8 and D9 free — no conflict.
+- **A4988 VDD/GND orientation:** Reference diagram had VDD and GND swapped on the logic side of the chip. Caught before wiring; corrected in the reference.
+
+**Notes**
+- NEMA 17 coil color code confirmed: Black = 1A, Green = 1B, Red = 2A, Blue = 2B.
+- `AccelStepper` with `runSpeedToPosition()` and `setSpeed(1000)` is smooth at current bench load. Upper speed limit under tube compression has not yet been tested — significant headroom expected given the NEMA 17's torque advantage over the 28BYJ-48.
+- Motor voltage is 9V; the A4988 accepts 8–35V so this is within spec. Upgrading to a 12V adapter later (no wiring changes needed) would recover additional torque and top-end speed if required.
+- With the NEMA 17, rotor radius and speed are no longer constrained by torque — the rotor can be designed for optimal flow geometry rather than minimum compression force.
+- `ML_PER_REV` remains uncalibrated (placeholder 1.2) — will be measured empirically once the revised rotor is printed and tubing is installed.
+
+**Next**
+- Measure the NEMA 17 motor body (diameter, shaft diameter, shaft length, bolt pattern) and redesign the motor base in Fusion to fit the new motor.
+- Redesign the rotor with a larger orbital radius — torque is no longer the limiting constraint, so radius can be optimized for flow rate and compression geometry.
+- Tune `setSpeed` upward once the new rotor and tubing are installed under real load.
+- Calibrate `ML_PER_REV` once consistent flow is confirmed with the new motor and rotor.
+
+---
+
