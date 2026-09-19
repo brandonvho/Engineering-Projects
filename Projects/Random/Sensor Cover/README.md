@@ -7,7 +7,8 @@ My friend asked me if I could create something to cover a sensor hole on his car
 - Create a piece that can pop into the sensor hole and fit snug.
  
 ## Requirements & Constraints 
-
+- Fits snug into the sensor hole on its own without tape or glue.
+- Stays in plave with moderate vibrations.
  
 ## Design Summary 
 Circular clip similar to car push clips.
