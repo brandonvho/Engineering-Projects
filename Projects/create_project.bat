@@ -98,14 +98,26 @@ type nul > Images\final_build.jpg
 REM Create Notes directory
 mkdir Notes 2>nul
 (
-    echo # Design Log – %PROJECT_NAME%
+    echo # Engineering Log - %PROJECT_NAME%
     echo.
-    echo ## Date: YYYY-MM-DD
-    echo - **Work:** What you did
-    echo - **Issues:** What didn't work or needs improvement
-    echo - **Notes:** Engineering observations
-    echo - **Next:** Next steps
-) > Notes\design_log.md
+    echo ---
+    echo.
+    echo ## MM/DD/YY — Session 1: [Short session title]
+    echo.
+    echo **Work completed**
+    echo -
+    echo.
+    echo **Issues**
+    echo -
+    echo.
+    echo **Notes**
+    echo -
+    echo.
+    echo **Next**
+    echo -
+    echo.
+    echo ---
+) > Notes\engineering_log.md
 
 cd ..
 
