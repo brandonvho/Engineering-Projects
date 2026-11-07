@@ -1,44 +1,25 @@
-# Mars Habitat CO2 Scrubber
+# ECLSS CO2 Scrubber
 
 ## Overview
-A portfolio engineering project designing a CO2 scrubber for a Mars habitat life support system, modeled loosely on the ISS CDRA (Carbon Dioxide Removal Assembly) and adapted for Mars conditions.
+A bench-scale CO2 scrubber based on the ISS Carbon Dioxide Removal Assembly (CDRA). The goal is to validate a home-built test method against published NASA sorbent data, then use it to size a working scrubber bed.
 
-## Objectives
-- Learn thermodynamics and materials science by applying them to a real adsorption/mass-transfer problem.
-- Learn Python by modeling CO2 adsorption isotherms, sorbent bed sizing, and breakthrough curves.
-- Design a housing for the scrubber in SolidWorks.
-- Run FEA on the pressure vessel (Fusion 360 or SolidWorks Simulation).
-- 3D print a demonstration unit.
+## Status
+In progress. See the [engineering log](Notes/engineering_log.md) for session-by-session progress.
 
-## Requirements & Constraints
-*(TBD — to be filled in as sorbent choice, bed geometry, and Mars-specific operating conditions are pinned down during the research phase.)*
+## Plan
+1. **Validate:** Measure CO2 uptake on zeolite 13X and compare to NASA's published data.
+2. **Apply:** Measure zeolite 5A (CDRA's CO2 sorbent) with the same method and use the results to size a scrubber bed.
 
-## Design Summary
-*(TBD — this project is in the research phase. This section will describe the sorbent selection, isotherm model, bed sizing approach, and housing design once those decisions are made.)*
-
-## Tools & Technologies
+## Tools
 | Category | Item |
 |---|---|
 | Modeling | Python |
-| Adsorption model | Langmuir / Toth isotherm (TBD) |
+| Electronics | Arduino, CO2/RH sensors |
 | CAD | SolidWorks |
-| FEA | Fusion 360 or SolidWorks Simulation |
-| Slicer / Printer | TBD |
+| Fabrication | 3D printing |
 
-## Testing & Results
-*(No sessions logged yet — see the design log for session-by-session progress.)*
-
-## Challenges & Lessons Learned
-*(None yet.)*
-
-## Future Improvements
-*(To be added as the project develops.)*
-
----
-
-### Planned phases
-1. Research — CDRA architecture, sorbent options, Mars atmospheric/environmental conditions
-2. Python modeling — isotherm selection, bed sizing, breakthrough curve simulation
-3. SolidWorks housing design
-4. FEA — pressure vessel analysis
-5. 3D-printed prototype
+## References
+- Cmarik & Knox, *Co-Adsorption of Carbon Dioxide on Zeolite 13X in the Presence of Preloaded Water*, ICES-2018-3
+- Watson et al., *Sorbent Structural Testing on Carbon Dioxide Removal Sorbents for Advanced Exploration Systems*, ICES-2016-148
+- Cmarik, Son & Knox, *Standard Isotherm Fit Information for Dry CO2 on Sorbents for 4-Bed Molecular Sieve*, NASA/TM-2017-219847
+- Huang et al., *CO2 Capacity Sorbent Analysis Using Volumetric Measurement Approach*, ICES-2017-116
