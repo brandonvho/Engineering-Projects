@@ -1,0 +1,25 @@
+# Normalized CO2 uptake at 2 kPa vs water preload, digitized from Cmarik & Knox ICES-2018, Fig. 9 (right panel)
+# Digitized by marker detection on a 400-dpi render; expect about +/-0.02 in each value
+# The 25C point at ~1.05 is two overlapping markers (about 1.00 and 1.08); split by eye
+temp_C,n_H2O_molkg,norm_CO2
+25,0.00,1.000
+25,0.65,0.758
+25,1.00,0.677
+25,1.08,0.663
+25,1.58,0.567
+25,2.19,0.472
+25,4.30,0.276
+25,5.25,0.214
+25,6.11,0.182
+25,7.11,0.150
+50,0.00,0.956
+50,1.14,0.571
+50,2.17,0.326
+50,4.43,0.179
+50,6.05,0.151
+75,0.00,1.000
+75,1.21,0.494
+75,1.33,0.473
+75,2.46,0.247
+75,2.98,0.197
+75,4.38,0.190

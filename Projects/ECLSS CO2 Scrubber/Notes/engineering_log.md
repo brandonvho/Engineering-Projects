@@ -45,7 +45,7 @@
 - Estimated pressure drop with the Ergun equation: about 50 Pa.
 
 **Issues**
-- 5A capacity was a placeholder (1 mol/kg) until real data was found.
+- 5A capacity was a placeholder (1 mol/kg) until real data was found (resolved in Session 5).
 
 **Notes**
 - Regenerate by baking the 5A between runs.
@@ -63,7 +63,7 @@
 - Decided to start at 1/10 of one person's CO2 output so mistakes are cheap.
 
 **Notes**
-- 1 person ≈ 1 kg CO2/day (NASA sources, verify before citing).
+- 1 person ≈ 1 kg CO2/day (NASA sources, verify before citing). 1/10 scale ≈ 100 g/day ≈ 0.095 mol/hr.
 
 **Next**
 - Decide the test setup.
@@ -101,5 +101,42 @@
 
 **Next**
 - Write one pass/fail requirement for matching the 13X data.
+
+---
+
+## 11/08/26 — Session 7: First Python Model (13X)
+
+**Work completed**
+- Wrote my first Python model: `Model/co2_h2o_13x_model.py`. It recreates the Cmarik & Knox 13X CO2/water co-adsorption model.
+  - Dry CO2 capacity: 3-site Langmuir isotherm (Eq. 4) with NASA's parameters from NASA/TM-2017-219847.
+  - Water penalty: Toth-form fraction of capacity lost (Eq. 5, b = 0.500, t = 1.251 from Table 1).
+  - Wet CO2 capacity = dry capacity × (1 − f_H2O) (Eq. 6).
+  - Also included the paper's simpler linear water model (Eqs. 1–3) for comparison.
+- Plotted CO2 uptake vs. CO2 pressure at the paper's water preloads, and CO2 uptake vs. water preload at 0.26 kPa and 2 kPa (`Model/co2_h2o_13x_model.png`).
+- Added `Model/requirements.txt` (numpy, scipy, pandas, matplotlib) and source data in `Model/data/`.
+
+**Issues**
+- The paper doesn't list the dry isotherm parameters. First version of the script used dry data eyeballed from Fig. 5/8.
+  - Resolved: found NASA/TM-2017-219847 (the paper's Ref. 9). Its Table 2 has NASA's 3-site Langmuir parameters and Table 1 has the measured data. The parameters reproduce the 25 C data to 0.016 mol/kg RMS (pressure in kPa, T in K). The model now uses them directly.
+  - Dry capacity at 0.26 kPa is 1.19 mol/kg. The eyeballed version said 1.28, about 7% high.
+- Eq. 5 with the Table 1 values gives f_H2O = 0.44 at 1.25 mol/kg, but the paper's conclusion says half is lost at 1.25.
+  - Checked against Fig. 9 data (digitized, `Model/water_effect_check.py`). The equation hits half at 1.55 mol/kg. The data hits half at 2.0 (25 C), 1.4 (50 C) and 1.2 (75 C).
+  - A refit of Eq. 5 to all three temperatures gives about 1.5, so the Table 1 values behave like an all-temperature fit. The 1.25 in the conclusion only matches the 75 C data.
+  - At 25 C the model predicts more water damage than was measured (up to 0.07 of dry capacity), so it's conservative at room temperature.
+  - The paper's TGA check (Fig. 10) also suggests water is less harmful than the FlexiDOSE data shows.
+
+**Notes**
+- Low-preload points in Fig. 9 sit about 0.16 mol/kg left of the preloads listed in Fig. 8's legend (e.g. 0.65 vs 0.81). Higher preloads match. Not sure why.
+- A small amount of water does the most damage: ~0.8 mol/kg (~1.5 wt%) cuts CO2 capacity by about a third. The silica gel matters most right as water starts breaking through.
+- The linear model drops to zero capacity at 3.6 mol/kg water. The Toth model never reaches zero.
+- The model assumes water removes the same fraction of capacity at every CO2 pressure.
+- This is an equilibrium model only — no time or airflow. The sealed-chamber test (Session 5) measures chamber CO2 dropping over time, so the next model is a chamber decay model. Uptake comes from a mass balance: change in chamber CO2 × chamber volume ÷ sorbent mass.
+
+**Next**
+- Write the pass/fail requirement: measured 13X uptake within X% of NASA/TM-2017-219847 at the same CO2 pressure (carried over from Session 6).
+- Choose chamber volume and 13X sample mass (carried over from Session 5).
+- Build a chamber decay model: chamber CO2 vs. time for a given volume, flow rate, and sample mass, using the NASA dry isotherm.
+- Measure the blower's actual flow through the packed bed.
+- Size the silica gel bed from flow, room humidity, and run time.
 
 ---

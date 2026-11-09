@@ -6,6 +6,9 @@ A bench-scale CO2 scrubber based on the ISS Carbon Dioxide Removal Assembly (CDR
 ## Status
 In progress. See the [engineering log](Notes/engineering_log.md) for session-by-session progress.
 
+## Model
+Python model of NASA's 13X CO2/water co-adsorption equations, checked against NASA's measured data. See [Model/README.md](Model/README.md) for what it does, how to run it, and findings so far.
+
 ## Plan
 1. **Validate:** Measure CO2 uptake on zeolite 13X and compare to NASA's published data.
 2. **Apply:** Measure zeolite 5A (CDRA's CO2 sorbent) with the same method and use the results to size a scrubber bed.

@@ -6,6 +6,9 @@ echo Project Structure Creator
 echo ==================================================
 echo.
 
+REM Always create the project next to this script
+cd /d "%~dp0"
+
 REM Ask for project name
 set /p PROJECT_NAME="What do you want to name your new project? "
 if "%PROJECT_NAME%"=="" (
@@ -26,8 +29,15 @@ if /i "%ARDUINO_INPUT%"=="y" (
 echo.
 echo Creating project structure for '%PROJECT_NAME%'...
 
+REM Stop if the project already exists, so its README and log aren't overwritten
+if exist "%PROJECT_NAME%" (
+    echo Error: A folder named '%PROJECT_NAME%' already exists here. Nothing was changed.
+    pause
+    exit /b 1
+)
+
 REM Create main project directory
-if not exist "%PROJECT_NAME%" mkdir "%PROJECT_NAME%"
+mkdir "%PROJECT_NAME%"
 cd "%PROJECT_NAME%"
 
 REM Create README.md
@@ -72,7 +82,7 @@ mkdir CAD\exported_STL 2>nul
 
 REM Create Arduino directory if needed
 if "%USE_ARDUINO%"=="1" (
-    mkdir Arduino 2>nul
+    mkdir Arduino\code 2>nul
     (
         echo // Arduino code for %PROJECT_NAME%
         echo.
@@ -83,17 +93,14 @@ if "%USE_ARDUINO%"=="1" (
         echo void loop^(^) {
         echo   // Main code loop
         echo }
-    ) > Arduino\code.ino
-    
+    ) > Arduino\code\code.ino
+
     REM Create Electronics directory (only if using Arduino)
     mkdir Electronics 2>nul
-    type nul > Electronics\wiring_diagram.png
 )
 
 REM Create Images directory
 mkdir Images 2>nul
-type nul > Images\prototype_v1.jpg
-type nul > Images\final_build.jpg
 
 REM Create Notes directory
 mkdir Notes 2>nul
@@ -138,5 +145,8 @@ if "%USE_ARDUINO%"=="1" (
     echo   - Images\
     echo   - Notes\
 )
+echo.
+echo Note: Git doesn't track empty folders. Each folder shows up on GitHub
+echo once it has a file in it.
 echo.
 pause
