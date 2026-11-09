@@ -117,7 +117,7 @@
 
 **Issues**
 - The paper doesn't list the dry isotherm parameters. First version of the script used dry data eyeballed from Fig. 5/8.
-  - Resolved: found NASA/TM-2017-219847 (the paper's Ref. 9). Its Table 2 has NASA's 3-site Langmuir parameters and Table 1 has the measured data. The parameters reproduce the 25 C data to 0.016 mol/kg RMS (pressure in kPa, T in K). The model now uses them directly.
+  - Resolved: used NASA/TM-2017-219847 (the paper's Ref. 9, found in Session 5). Its Table 2 has NASA's 3-site Langmuir parameters and Table 1 has the measured data. The parameters reproduce the 25 C data to 0.016 mol/kg RMS (pressure in kPa, T in K). The model now uses them directly.
   - Dry capacity at 0.26 kPa is 1.19 mol/kg. The eyeballed version said 1.28, about 7% high.
 - Eq. 5 with the Table 1 values gives f_H2O = 0.44 at 1.25 mol/kg, but the paper's conclusion says half is lost at 1.25.
   - Checked against Fig. 9 data (digitized, `Model/water_effect_check.py`). The equation hits half at 1.55 mol/kg. The data hits half at 2.0 (25 C), 1.4 (50 C) and 1.2 (75 C).

@@ -58,7 +58,7 @@ python water_effect_check.py
 
 ## Limitations
 
-- Equilibrium only: no time, airflow, or bed geometry. Predicting breakthrough curves from the rig needs a mass balance along the bed and a rate term (linear driving force).
+- Equilibrium only: no time, airflow, or bed geometry. Predicting the sealed-chamber test (chamber CO2 vs. time) needs a chamber decay model built on this isotherm.
 - 13X only. The rig's CO2 bed is 5A, which needs its own dry isotherm and water-effect parameters (Huang et al., ICES-2017-116).
 - Assumes water removes the same fraction of capacity at every CO2 pressure.
 
