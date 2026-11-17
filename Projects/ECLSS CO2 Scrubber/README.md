@@ -4,7 +4,7 @@
 A bench-scale CO2 scrubber based on the ISS Carbon Dioxide Removal Assembly (CDRA). The goal is to validate a home-built test method against published NASA sorbent data, then use it to size a working scrubber bed.
 
 ## Status
-In progress. See the [engineering log](Notes/engineering_log.md) for session-by-session progress.
+In progress (Nov 2026). The Python model is complete and validated against NASA data (0.016 mol/kg RMS over 59 points). Next is the test rig: a chamber decay model, pass/fail criteria, and hardware. See the [engineering log](Notes/engineering_log.md) for session-by-session progress.
 
 ## Model
 Python model of NASA's 13X CO2/water co-adsorption equations, checked against NASA's measured data. See [Model/README.md](Model/README.md) for what it does, how to run it, and findings so far.

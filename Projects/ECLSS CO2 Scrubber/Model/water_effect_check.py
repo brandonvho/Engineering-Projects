@@ -67,17 +67,17 @@ def main():
     n = np.linspace(0, 9, 300)
     fig, ax = plt.subplots(figsize=(8, 5.5))
     for (T, g), c in zip(d.groupby("temp_C"), ["k", "tab:red", "tab:green"]):
-        ax.plot(g.n_H2O_molkg, g.norm_CO2, "o", c=c, label=f"{T} C data (Fig. 9)")
+        ax.plot(g.n_H2O_molkg, g.norm_CO2, "o", c=c, label=f"{T} °C data (Fig. 9)")
     ax.plot(n, remaining(n, B_TABLE1, T_TABLE1), c="m", lw=2.5,
             label="Eq. 5, Table 1 values")
     b, t = fits["25 C only"]
-    ax.plot(n, remaining(n, b, t), "k--", label="Eq. 5 refit, 25 C only")
+    ax.plot(n, remaining(n, b, t), "k--", label="Eq. 5 refit, 25 °C only")
     ax.axhline(0.5, c="gray", lw=0.8)
     ax.axvline(CLAIM, c="gray", lw=0.8, ls=":")
     ax.text(CLAIM + 0.08, 0.9, "paper's claim:\nhalf lost at 1.25", color="gray")
-    ax.set(xlabel="Water preload (mol H2O/kg)",
-           ylabel="CO2 uptake at 2 kPa / dry uptake",
-           title="Where does 13X lose half its CO2 capacity?",
+    ax.set(xlabel=r"Water preload (mol H$_2$O/kg)",
+           ylabel=r"CO$_2$ uptake at 2 kPa / dry uptake",
+           title=r"Where does 13X lose half its CO$_2$ capacity?",
            xlim=(0, 9), ylim=(0, 1.05))
     ax.legend(fontsize=9)
     ax.grid(alpha=0.3)

@@ -3,6 +3,9 @@
 ## Overview
 Building a peristaltic pump using an Arduino Mega, a stepper motor, a 4×4 keypad, a 16×2 LCD, and a 3D-printed housing. The pump draws liquid through flexible silicone tubing by compressing it with rotating ball bearings, creating a vacuum that moves fluid without it ever contacting the motor or electronics.
 
+## Status
+In progress (Nov 2026). Rev C rotor (solid triangle with a tube cover) is printed and test-fit. The 28BYJ-48 stalled under tube compression, so the pump now runs a NEMA 17 with an A4988 driver at 1/8 microstepping, confirmed at 1,000 steps/s. Next: a motor base for the NEMA 17, a rotor sized for flow, and calibrating mL per revolution.
+
 ## Objectives
 - Learn practical circuit design and breadboarding.
 - Learn how to program an Arduino and interface common peripherals (LCD, keypad, stepper motor).
@@ -15,7 +18,7 @@ Building a peristaltic pump using an Arduino Mega, a stepper motor, a 4×4 keypa
 - The user interface must allow volume entry via keypad and display status on an LCD — no computer connection needed during operation.
 
 ## Design Summary
-The 28BYJ-48 stepper motor (driven by its ULN2003 board) rotates a 3D-printed rotor fitted with ball bearings. Those bearings compress a loop of silicone tubing against a curved housing wall, pushing fluid through the tube one "pinch" at a time. Volume is entered on a 4×4 membrane keypad; the LCD1602 shows the prompt, live dispensing progress, and a completion message. A 12 V external power supply (routed through the kit's power supply module) will drive the larger replacement stepper motor in later iterations.
+A NEMA 17 stepper motor (driven by an A4988 at 1/8 microstepping, 1,600 steps/rev) rotates a 3D-printed rotor fitted with ball bearings. The prototype used the kit's 28BYJ-48 and ULN2003, which stalled under tube compression. Those bearings compress a loop of silicone tubing against a curved housing wall, pushing fluid through the tube one "pinch" at a time. Volume is entered on a 4×4 membrane keypad; the LCD1602 shows the prompt, live dispensing progress, and a completion message. A 9 V adapter powers the Arduino, and the A4988's motor supply (VMOT) is taken from the Arduino's VIN pin.
 
 The Arduino sketch runs a non-blocking step loop using `AccelStepper` with `runSpeedToPosition()` so the keypad stays responsive during dispensing and the user can cancel mid-run with the `*` key.
 
@@ -23,12 +26,11 @@ The Arduino sketch runs a non-blocking step loop using `AccelStepper` with `runS
 | Category | Item |
 |---|---|
 | Microcontroller | Elegoo Mega 2560 |
-| Motor driver | ULN2003 (included in kit) |
-| Stepper (prototype) | 28BYJ-48 (included in kit) |
-| Stepper (target) | NEMA 17 (to be wired with external driver) |
+| Motor driver | A4988 (prototype: ULN2003, included in kit) |
+| Stepper | NEMA 17 (prototype: 28BYJ-48, included in kit) |
 | Display | LCD1602 Module (included in kit) |
 | Input | 4×4 Membrane Keypad (included in kit) |
-| Power | Power Supply Module + 12 V DC adapter |
+| Power | 9 V DC adapter into the Arduino barrel jack |
 | CAD | Autodesk Fusion 360 |
 | Slicer / Printer | Bambu Lab P1S |
 | IDE | Arduino IDE |
@@ -40,6 +42,9 @@ The Arduino sketch runs a non-blocking step loop using `AccelStepper` with `runS
 - **Session 4 (4/28/26):** Printed parts inspected against hardware. Multiple dimensional issues identified on both parts: axle hole undersized on motor base, base too thin causing screw protrusion into rotor sweep zone, bearing pegs undersized on rotor causing loose fit, and no tube clearance between bearing OD and outer wall. Revisions planned — rotor arm profile will also change from cross to zig-zag to introduce spring-like compliance for consistent tube pressure.
 - **Session 5 (4/28/26):** Full sketch troubleshooting pass. Resolved all remaining software issues including broken cancel logic, LCD text overflow, motor reversal caused by the standard `Stepper` library's incompatibility with single-step non-blocking use, and AccelStepper configuration issues (wrong run method, missing acceleration, incorrect emergency stop). Motor now runs correctly at constant speed with working cancel and stable LCD.
 - **Session 6 (4/28/26):** First liquid pump test. Electrical system confirmed fully functional. Pump did not draw water — bearing not compressing tube sufficiently, and bearing shifts laterally during rotation, breaking the peristaltic seal. Both issues are mechanical and will be addressed in the next rotor revision.
+- **Session 7 (5/21/26):** Rotor redesigned: smaller bearing orbit to reduce compression force, solid triangle profile instead of the cross arms, and a housing cover to stop the tube drifting sideways.
+- **Session 8 (5/22/26):** The 28BYJ-48 stalled under compression across repeated runs with the new rotor. Decided to move to the NEMA 17 and A4988.
+- **Session 9 (5/26/26):** NEMA 17 and A4988 wired (STEP/DIR, 1/8 microstepping) and the sketch updated for `DRIVER` mode. Motor confirmed running smoothly at 1,000 steps/s.
 
 ## Challenges & Lessons Learned
 - **LCD showing nothing:** The RW (read/write) pin on the LCD1602 must be tied to GND for write-only operation. Leaving it floating causes the display to show nothing. Always check datasheet pin requirements before debugging in software.
@@ -47,15 +52,16 @@ The Arduino sketch runs a non-blocking step loop using `AccelStepper` with `runS
 - **Standard `Stepper` library incompatible with non-blocking use:** Calling `step(1)` repeatedly in a loop confused the library's internal timing, causing the 28BYJ-48 to stutter and reverse direction. Replaced with `AccelStepper`.
 - **`AccelStepper` configuration is order-sensitive:** `runSpeed()` ignores `move()` targets; `run()` requires `setAcceleration()` to be defined or the motor won't move; `stop()` decelerates gradually rather than halting instantly. The correct pattern for this use case is `runSpeedToPosition()` with a fixed `setSpeed()`, which runs at constant speed with no ramp and respects `distanceToGo()`. Emergency stop must use `setCurrentPosition(currentPosition())` to immediately zero `distanceToGo()`.
 - **ULN2003 pin order must match AccelStepper's expected coil sequence:** A mismatch causes the coils to fight each other — the motor shakes in place and draws high current. Diagnosed by swapping the D9 and D10 wires on the ULN2003 board. Verify pin order against the library's expected sequence whenever rewiring.
+- **Small steppers can't compress tubing:** the 28BYJ-48 is built for low-torque motion and stalled under continuous tube compression regardless of rotor geometry.
+- **Motor supply voltage:** wiring the A4988's VMOT to a 5 V rail made the NEMA 17 jerk. The A4988 needs 8–35 V on VMOT; moving it to the 9 V supply fixed it.
 - **Bearing alignment is critical for peristaltic action:** A bearing that can drift laterally will not compress the tube perpendicularly, breaking the vacuum seal. Rotor design must constrain the bearing both radially and laterally throughout the full rotation.
 
 ## Future Improvements
-- Fix rotor dimensional issues: increase bearing peg diameter, add tube clearance between bearing OD and outer wall, increase motor base thickness, and correct axle hole diameter.
-- Redesign rotor arm profile from cross to zig-zag to introduce spring-like compliance and maintain consistent radial pressure on the tube throughout rotation.
-- Add side walls to the rotor to constrain the bearing and tube laterally and keep them aligned.
+- Redesign the motor base to fit the NEMA 17.
+- Redesign the rotor with a larger orbital radius, now that torque is no longer the limit.
 - Physically calibrate `ML_PER_REV` by running a fixed number of revolutions and measuring displaced volume with a syringe or graduated cylinder.
+- Tune motor speed upward under real tube load.
 - Design and print the outer pump housing with mounts for the screen and keypad.
-- Replace the 28BYJ-48 with a NEMA 17 and an appropriate stepper driver (e.g., A4988 or DRV8825) for more torque and flow rate.
 - Design and print all structural parts in PETG for better moisture and chemical resistance than PLA.
 - Add a flow-rate mode so the user can specify mL/min in addition to total volume.
 - Add decimal-unit selection (mL vs. fl oz) via the `B`/`C`/`D` keypad keys.
